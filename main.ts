@@ -6,7 +6,7 @@
 // make.fun (via @makefunai) and my play code in its text. POST.json names
 // the post; the house reads its replies, reposts and quotes from X.
 
-import { copyFileSync, mkdirSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const BOT_DIR = process.env.MAKEFUN_BOT_DIR ?? '/bot';
@@ -17,6 +17,10 @@ const target = join(OUTPUT_DIR, 'POST.json');
 mkdirSync(OUTPUT_DIR, { recursive: true });
 try {
   copyFileSync(source, target);
+  const data = JSON.parse(readFileSync(target, 'utf8')) as { url?: unknown };
+  if (typeof data.url !== 'string' || !/^https:\/\/(www\.|mobile\.)?(x|twitter)\.com\//.test(data.url)) {
+    throw new Error('POST.json has no valid post url');
+  }
 } catch (err) {
   console.error(`POST.json could not be copied from ${BOT_DIR}: ${(err as Error).message}`);
   process.exit(1);
